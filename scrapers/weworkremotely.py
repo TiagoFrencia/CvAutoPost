@@ -13,9 +13,10 @@ import xml.etree.ElementTree as ET
 
 import requests
 import structlog
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from core.models import Job
-from scrapers.base import BaseScraper
+from scrapers.base import BaseScraper, random_user_agent
 
 logger = structlog.get_logger()
 
@@ -24,11 +25,6 @@ RSS_FEEDS = [
     "https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss",
     "https://weworkremotely.com/categories/remote-front-end-programming-jobs.rss",
 ]
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; auto-applier-bot/1.0)",
-    "Accept": "application/rss+xml, application/xml, text/xml",
-}
 
 # Keywords to filter — must appear in title to be worth scoring
 TARGET_KEYWORDS = {
@@ -61,8 +57,18 @@ class WeWorkRemotelyScraper(BaseScraper):
 
         return all_jobs
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=30),
+        retry=retry_if_exception_type(requests.RequestException),
+        reraise=True,
+    )
     def _fetch_feed(self, feed_url: str) -> list[dict]:
-        resp = requests.get(feed_url, headers=HEADERS, timeout=15)
+        headers = {
+            "User-Agent": random_user_agent(),
+            "Accept": "application/rss+xml, application/xml, text/xml",
+        }
+        resp = requests.get(feed_url, headers=headers, timeout=15)
         resp.raise_for_status()
 
         root = ET.fromstring(resp.content)

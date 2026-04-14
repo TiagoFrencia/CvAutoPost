@@ -6,19 +6,16 @@ API base: https://www.getonboard.com/api/v1
 from typing import Optional
 import requests
 import structlog
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from sqlalchemy.orm import Session
 
 from core.models import Job
-from scrapers.base import BaseScraper
+from scrapers.base import BaseScraper, random_user_agent
 
 logger = structlog.get_logger()
 
 BASE_URL = "https://www.getonboard.com/api/v1"
-DEFAULT_HEADERS = {
-    "Accept": "application/json",
-    "User-Agent": "Mozilla/5.0 (compatible; auto-applier-bot/1.0)",
-}
 
 # Keywords that target the remoto CV profile
 SEARCH_KEYWORDS = [
@@ -56,30 +53,35 @@ class GetOnBoardScraper(BaseScraper):
         return unique
 
     def _fetch_page(self, keyword: str, page: int = 1) -> list[dict]:
+        try:
+            return self._http_get(keyword, page)
+        except Exception as e:
+            logger.error("getonboard.fetch_error", keyword=keyword, error=str(e))
+            return []
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=30),
+        retry=retry_if_exception_type(requests.RequestException),
+        reraise=True,
+    )
+    def _http_get(self, keyword: str, page: int = 1) -> list[dict]:
         params = {
             "kws": keyword,
             "remote": "true",
             "per_page": 50,
             "page": page,
         }
-        try:
-            resp = requests.get(
-                f"{BASE_URL}/jobs.json",
-                params=params,
-                headers=DEFAULT_HEADERS,
-                timeout=15,
-                verify=False,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-
-            # The API wraps jobs under a "jobs" key
-            # Adjust key name if the API returns a different structure
-            return data.get("jobs", data if isinstance(data, list) else [])
-
-        except requests.RequestException as e:
-            logger.error("getonboard.fetch_error", keyword=keyword, error=str(e))
-            return []
+        resp = requests.get(
+            f"{BASE_URL}/jobs.json",
+            params=params,
+            headers={"Accept": "application/json", "User-Agent": random_user_agent()},
+            timeout=15,
+            verify=False,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("jobs", data if isinstance(data, list) else [])
 
     def parse_job(self, raw: dict) -> Optional[Job]:
         external_id = str(raw.get("id", ""))

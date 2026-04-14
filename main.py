@@ -6,6 +6,8 @@ Entry point. Usage:
   python main.py seed      — insert initial platforms and CV profiles into DB
 """
 import sys
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import structlog
 import logging
 
@@ -23,6 +25,32 @@ structlog.configure(
 logging.basicConfig(level=logging.WARNING)
 
 logger = structlog.get_logger()
+
+
+# ── Health server ─────────────────────────────────────────────────────────────
+
+class _HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/health":
+            body = b'{"status":"ok"}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def log_message(self, *args):
+        pass  # silence HTTP access logs
+
+
+def _start_health_server(port: int = 8081) -> None:
+    server = HTTPServer(("0.0.0.0", port), _HealthHandler)
+    t = threading.Thread(target=server.serve_forever, daemon=True, name="health-server")
+    t.start()
+    logger.info("health_server.started", port=port)
 
 
 def cmd_seed():
@@ -116,6 +144,7 @@ def cmd_scrape():
 def cmd_run():
     from ai_engine.cv_validator import validate_all
     validate_all()
+    _start_health_server()
     from services.telegram_bot import start_polling_thread
     start_polling_thread()
     from orchestrator.pipeline import run_pipeline
@@ -125,6 +154,7 @@ def cmd_run():
 def cmd_schedule():
     from ai_engine.cv_validator import validate_all
     validate_all()
+    _start_health_server()
     from services.telegram_bot import start_polling_thread
     start_polling_thread()
     from orchestrator.scheduler import start_scheduler

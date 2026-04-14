@@ -59,10 +59,13 @@ class Job(Base):
     match_results = relationship("MatchResult", back_populates="job")
     applications = relationship("Application", back_populates="job")
 
+    fingerprint = Column(String(32), nullable=True)  # MD5 of title+company+location for cross-platform dedup
+
     __table_args__ = (
         UniqueConstraint("platform_id", "external_id", name="uq_platform_external_id"),
         Index("ix_jobs_status", "status"),
         Index("ix_jobs_company_title", "company", "title"),
+        Index("ix_jobs_fingerprint", "fingerprint", unique=True, postgresql_where="fingerprint IS NOT NULL"),
     )
 
 

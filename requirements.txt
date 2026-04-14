@@ -33,6 +33,9 @@ pyyaml==6.0.1
 fake-useragent==1.5.1
 cryptography==42.0.5
 
+# Resilience
+tenacity==8.3.0
+
 # Testing
 pytest==8.2.0
 pytest-mock==3.14.0

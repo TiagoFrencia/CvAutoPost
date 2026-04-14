@@ -7,19 +7,16 @@ from typing import Optional
 import time
 import requests
 import structlog
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from sqlalchemy.orm import Session
 
 from core.models import Job
-from scrapers.base import BaseScraper
+from scrapers.base import BaseScraper, random_user_agent
 
 logger = structlog.get_logger()
 
 FEED_URL = "https://remoteok.com/api"
-DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; auto-applier-bot/1.0)",
-    "Accept": "application/json",
-}
 
 # Tags to filter — only keep jobs that have at least one of these
 TARGET_TAGS = {
@@ -40,19 +37,29 @@ class RemoteOKScraper(BaseScraper):
 
     def fetch_jobs(self) -> list[dict]:
         try:
-            # RemoteOK requires a small delay between requests to avoid 429
-            time.sleep(1)
-            resp = requests.get(FEED_URL, headers=DEFAULT_HEADERS, timeout=20)
-            resp.raise_for_status()
-            data = resp.json()
-
-            # First element is always metadata (has "legal" key), skip it
-            jobs = [item for item in data if isinstance(item, dict) and "legal" not in item]
-            return jobs
-
-        except requests.RequestException as e:
+            return self._http_fetch()
+        except Exception as e:
             logger.error("remoteok.fetch_error", error=str(e))
             return []
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=30),
+        retry=retry_if_exception_type(requests.RequestException),
+        reraise=True,
+    )
+    def _http_fetch(self) -> list[dict]:
+        # RemoteOK requires a small delay between requests to avoid 429
+        time.sleep(1)
+        headers = {
+            "User-Agent": random_user_agent(),
+            "Accept": "application/json",
+        }
+        resp = requests.get(FEED_URL, headers=headers, timeout=20)
+        resp.raise_for_status()
+        data = resp.json()
+        # First element is always metadata (has "legal" key), skip it
+        return [item for item in data if isinstance(item, dict) and "legal" not in item]
 
     def parse_job(self, raw: dict) -> Optional[Job]:
         external_id = str(raw.get("id", raw.get("slug", "")))

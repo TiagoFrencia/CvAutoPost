@@ -1,7 +1,11 @@
+import hashlib
+import re
+import time
+import unicodedata
 from abc import ABC, abstractmethod
 from typing import Optional
-import structlog
 
+import structlog
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -9,6 +13,60 @@ from core.models import Job, Platform
 
 logger = structlog.get_logger()
 
+
+# ── User-Agent rotation ───────────────────────────────────────────────────────
+
+def random_user_agent() -> str:
+    """Return a random Chrome user agent. Falls back to a static string on error."""
+    try:
+        from fake_useragent import UserAgent
+        return UserAgent().chrome
+    except Exception:
+        return (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0.0.0 Safari/537.36"
+        )
+
+
+# ── Cross-platform deduplication fingerprint ─────────────────────────────────
+
+def job_fingerprint(title: str, company: str, location: str = "") -> Optional[str]:
+    """
+    MD5 fingerprint of normalised title+company+location.
+    Returns None when company is blank (no meaningful cross-platform signal).
+    """
+    if not title or not company:
+        return None
+
+    def _norm(s: str) -> str:
+        s = unicodedata.normalize("NFKD", (s or "").lower())
+        s = "".join(c for c in s if not unicodedata.combining(c))
+        return re.sub(r"\W+", " ", s).strip()
+
+    text = f"{_norm(title)} {_norm(company)} {_norm(location)}"
+    return hashlib.md5(text.encode()).hexdigest()
+
+
+# ── Playwright goto with retry ────────────────────────────────────────────────
+
+def goto_with_retry(page, url: str, attempts: int = 3, timeout: int = 30_000) -> None:
+    """Navigate to url; retries up to `attempts` times on PWTimeout with exponential backoff."""
+    from playwright.sync_api import TimeoutError as PWTimeout
+
+    for i in range(attempts):
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+            return
+        except PWTimeout:
+            if i == attempts - 1:
+                raise
+            wait = 2 ** i
+            logger.warning("scraper.goto_retry", url=url, attempt=i + 1, wait_sec=wait)
+            time.sleep(wait)
+
+
+# ── Base scraper ──────────────────────────────────────────────────────────────
 
 class BaseScraper(ABC):
     platform_name: str
@@ -55,7 +113,21 @@ class BaseScraper(ABC):
         return new_count
 
     def _save_job(self, job: Job) -> bool:
-        """Insert job if not already present (dedup by platform_id + external_id). Returns True if inserted."""
+        """
+        Insert job if not already present.
+        Deduplicates by:
+          1. Cross-platform fingerprint (title + company + location)
+          2. Same-platform external_id
+        Returns True if inserted.
+        """
+        # Cross-platform deduplication
+        fp = job_fingerprint(job.title, job.company or "", job.location or "")
+        if fp:
+            job.fingerprint = fp
+            if self.db.query(Job).filter(Job.fingerprint == fp).first():
+                return False
+
+        # Same-platform deduplication
         existing = (
             self.db.query(Job)
             .filter_by(platform_id=job.platform_id, external_id=job.external_id)

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from ai_engine.cv_loader import get_cv
 from core.models import Job
 from core.playwright_config import CHROMIUM_ARGS, headless
-from scrapers.base import BaseScraper
+from scrapers.base import BaseScraper, goto_with_retry, random_user_agent
 
 logger = structlog.get_logger()
 
@@ -63,11 +63,7 @@ class IndeedScraper(BaseScraper):
             browser = p.chromium.launch(headless=headless(), args=CHROMIUM_ARGS)
             context = browser.new_context(
                 locale="es-AR",
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/124.0.0.0 Safari/537.36"
-                ),
+                user_agent=random_user_agent(),
             )
             for spec in self.search_specs:
                 page = context.new_page()
@@ -125,7 +121,7 @@ class IndeedScraper(BaseScraper):
         return specs
 
     def _fetch_query(self, page, spec: dict) -> list[dict]:
-        page.goto(spec["url"], wait_until="domcontentloaded", timeout=30_000)
+        goto_with_retry(page, spec["url"])
 
         try:
             page.wait_for_selector("a[data-jk]", timeout=10_000)
