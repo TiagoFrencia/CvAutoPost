@@ -1,0 +1,58 @@
+# Environment
+.env
+*.env
+
+# Cookies (sensitive session data — encrypted at rest but never commit)
+data/cookies/*.json
+data/cookies/*.credentials
+
+# Runtime state
+data/circuit_breaker.json
+
+# Screenshots (debug artifacts)
+data/screenshots/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+.eggs/
+venv/
+.venv/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright MCP debug files
+.playwright-mcp/
+
+# Alembic
+# (versions are committed intentionally)
+
+# API keys
+apiKeyGemini.txt
+
+# Personal data — copy the .example files and fill in your own info
+data/answers.yaml
+data/profile_context.yaml
+data/cvs/cv_remoto.json
+data/cvs/cv_local.json
+data/cvs/*.pdf
+
+# Runtime state
+data/email_seen.json

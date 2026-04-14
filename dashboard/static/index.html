@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auto Applier Bot — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0f172a; }
+    .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+    .card { @apply bg-slate-800 border border-slate-700 rounded-xl p-5; }
+    .fade-in { animation: fadeIn .35s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+  </style>
+</head>
+
+<body class="text-slate-200 min-h-screen font-sans antialiased">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="border-b border-slate-700/60 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-brand-500/20 flex items-center justify-center text-xl">🤖</div>
+        <div>
+          <h1 class="text-lg font-bold text-white leading-tight">Auto Applier Bot</h1>
+          <p class="text-xs text-slate-400">Dashboard de postulaciones laborales</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div id="last-updated" class="text-xs text-slate-500">Cargando…</div>
+        <div id="status-pill" class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-700 text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></span>
+          <span>Conectando…</span>
+        </div>
+        <button onclick="refresh()" title="Actualizar"
+          class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700 hover:bg-slate-600 transition text-slate-300 hover:text-white">
+          <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+    <!-- ── Stats row ──────────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 fade-in">
+      <div class="card" id="stat-applied">
+        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Postuladas hoy</p>
+        <p class="text-4xl font-bold text-emerald-400" id="val-applied">—</p>
+        <p class="text-xs text-slate-500 mt-1" id="val-success-rate">—% tasa de éxito</p>
+      </div>
+      <div class="card">
+        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Scrapeadas hoy</p>
+        <p class="text-4xl font-bold text-sky-400" id="val-scraped">—</p>
+        <p class="text-xs text-slate-500 mt-1" id="val-match-rate">—% con match IA</p>
+      </div>
+      <div class="card">
+        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Con match IA</p>
+        <p class="text-4xl font-bold text-violet-400" id="val-matched">—</p>
+        <p class="text-xs text-slate-500 mt-1" id="val-failed">— fallidas</p>
+      </div>
+      <div class="card">
+        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Plataformas activas</p>
+        <p class="text-4xl font-bold text-amber-400" id="val-platforms">—</p>
+        <p class="text-xs text-slate-500 mt-1" id="val-paused">— pausadas</p>
+      </div>
+    </div>
+
+    <!-- ── Chart + Platforms ──────────────────────────────────────────────── -->
+    <div class="grid lg:grid-cols-3 gap-6 fade-in">
+
+      <!-- History chart -->
+      <div class="card lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-slate-200">Postulaciones — últimos 14 días</h2>
+          <div class="flex items-center gap-3 text-xs text-slate-400">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span>Aplicadas</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500/70 inline-block"></span>Fallidas</span>
+          </div>
+        </div>
+        <div class="relative h-52">
+          <canvas id="history-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Platform cards -->
+      <div class="card">
+        <h2 class="text-sm font-semibold text-slate-200 mb-4">Plataformas</h2>
+        <div id="platform-list" class="space-y-2.5">
+          <!-- Filled by JS -->
+          <div class="text-slate-500 text-xs">Cargando…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Applications table ─────────────────────────────────────────────── -->
+    <div class="card fade-in">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-slate-200">Postulaciones recientes</h2>
+        <div class="flex items-center gap-2">
+          <input id="table-search" type="text" placeholder="Filtrar por título, empresa, plataforma…"
+            class="text-xs bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500 w-56"
+            oninput="filterTable()">
+          <select id="status-filter"
+            class="text-xs bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            onchange="filterTable()">
+            <option value="">Todos los estados</option>
+            <option value="APPLIED">Aplicada</option>
+            <option value="FAILED">Fallida</option>
+            <option value="QUEUED">En cola</option>
+            <option value="REVIEW_FORM">Revisar form</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-700 text-left">
+              <th class="pb-3 pr-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Puesto</th>
+              <th class="pb-3 pr-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Empresa</th>
+              <th class="pb-3 pr-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Plataforma</th>
+              <th class="pb-3 pr-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-center">Score</th>
+              <th class="pb-3 pr-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</th>
+              <th class="pb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Fecha</th>
+            </tr>
+          </thead>
+          <tbody id="applications-body">
+            <tr><td colspan="6" class="py-8 text-center text-slate-500 text-sm">Cargando postulaciones…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p id="table-count" class="mt-3 text-xs text-slate-500"></p>
+    </div>
+  </main>
+
+  <script>
+  // ── State ─────────────────────────────────────────────────────────────────
+  let _applications = [];
+  let _chart = null;
+
+  // ── Fetch helpers ─────────────────────────────────────────────────────────
+  async function fetchJSON(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`${url} → ${r.status}`);
+    return r.json();
+  }
+
+  // ── Render stats ──────────────────────────────────────────────────────────
+  function renderStats(stats) {
+    document.getElementById('val-applied').textContent = stats.jobs_applied;
+    document.getElementById('val-scraped').textContent = stats.jobs_scraped;
+    document.getElementById('val-matched').textContent = stats.jobs_matched;
+    document.getElementById('val-failed').textContent = stats.jobs_failed + ' fallidas';
+    document.getElementById('val-success-rate').textContent =
+      stats.success_rate + '% tasa de éxito';
+    document.getElementById('val-match-rate').textContent =
+      stats.match_rate + '% con match IA';
+  }
+
+  // ── Render history chart ──────────────────────────────────────────────────
+  function renderChart(history) {
+    const labels = history.map(h => {
+      const d = new Date(h.date + 'T00:00:00');
+      return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' });
+    });
+    const applied = history.map(h => h.applied);
+    const failed  = history.map(h => h.failed);
+
+    if (_chart) _chart.destroy();
+    const ctx = document.getElementById('history-chart').getContext('2d');
+    _chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Aplicadas',
+            data: applied,
+            backgroundColor: 'rgba(52, 211, 153, 0.75)',
+            borderColor: 'rgba(52, 211, 153, 1)',
+            borderWidth: 1,
+            borderRadius: 4,
+          },
+          {
+            label: 'Fallidas',
+            data: failed,
+            backgroundColor: 'rgba(248, 113, 113, 0.5)',
+            borderColor: 'rgba(248, 113, 113, 0.8)',
+            borderWidth: 1,
+            borderRadius: 4,
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          title: (items) => 'Fecha: ' + items[0].label,
+        }}},
+        scales: {
+          x: {
+            stacked: false,
+            grid: { color: 'rgba(100,116,139,0.15)' },
+            ticks: { color: '#94a3b8', font: { size: 11 } }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(100,116,139,0.15)' },
+            ticks: { color: '#94a3b8', precision: 0, font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  // ── Render platforms ──────────────────────────────────────────────────────
+  function renderPlatforms(platforms) {
+    const active   = platforms.filter(p => p.is_active && !p.is_paused).length;
+    const paused   = platforms.filter(p => p.is_active && p.is_paused).length;
+    const inactive = platforms.filter(p => !p.is_active).length;
+    document.getElementById('val-platforms').textContent = active;
+    document.getElementById('val-paused').textContent =
+      paused > 0 ? paused + ' pausada' + (paused > 1 ? 's' : '') : '—';
+
+    const PLATFORM_ICONS = {
+      linkedin: '🔗', computrabajo: '💼', indeed: '🔍',
+      zonajobs: '📋', bumeran: '🟠', remoteok: '🌍',
+      weworkremotely: '🏠', workana: '💡', getonboard: '🚀',
+    };
+
+    const list = document.getElementById('platform-list');
+    list.innerHTML = platforms.map(p => {
+      let dotClass, label;
+      if (!p.is_active) {
+        dotClass = 'bg-slate-600'; label = 'Inactiva';
+      } else if (p.is_paused) {
+        dotClass = 'bg-amber-400 animate-pulse'; label = 'Pausada';
+      } else {
+        dotClass = 'bg-emerald-400'; label = `${p.applied_today}/${p.daily_limit}`;
+      }
+      const icon = PLATFORM_ICONS[p.name] || '🔧';
+      const pauseInfo = p.is_paused && p.pause_reason
+        ? `<p class="text-xs text-amber-400/80 mt-0.5 truncate" title="${p.pause_reason}">${p.pause_reason}</p>` : '';
+      return `
+        <div class="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-slate-700/50 transition">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">${icon}</span>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-slate-200 capitalize">${p.name}</p>
+              ${pauseInfo}
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-xs text-slate-400">${label}</span>
+            <span class="w-2 h-2 rounded-full ${dotClass}"></span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Render applications table ─────────────────────────────────────────────
+  const STATUS_STYLES = {
+    APPLIED:     'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+    QUEUED:      'bg-sky-500/15 text-sky-400 border border-sky-500/30',
+    FAILED:      'bg-red-500/15 text-red-400 border border-red-500/30',
+    REVIEW_FORM: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+    REVIEW_SCORE:'bg-violet-500/15 text-violet-400 border border-violet-500/30',
+    SKIPPED:     'bg-slate-500/15 text-slate-400 border border-slate-500/30',
+  };
+  const STATUS_LABELS = {
+    APPLIED: 'Aplicada', QUEUED: 'En cola', FAILED: 'Fallida',
+    REVIEW_FORM: 'Revisar form', REVIEW_SCORE: 'Revisar score', SKIPPED: 'Omitida',
+  };
+  const PLATFORM_COLORS = {
+    linkedin: 'bg-blue-500/15 text-blue-400',
+    computrabajo: 'bg-orange-500/15 text-orange-400',
+    indeed: 'bg-indigo-500/15 text-indigo-400',
+    zonajobs: 'bg-green-500/15 text-green-400',
+    bumeran: 'bg-rose-500/15 text-rose-400',
+    remoteok: 'bg-teal-500/15 text-teal-400',
+    weworkremotely: 'bg-purple-500/15 text-purple-400',
+  };
+
+  function scoreColor(score) {
+    if (score === null || score === undefined) return 'text-slate-500';
+    if (score >= 80) return 'text-emerald-400 font-bold';
+    if (score >= 60) return 'text-amber-400 font-semibold';
+    return 'text-slate-400';
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: '2-digit' })
+      + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderTable(apps) {
+    const body = document.getElementById('applications-body');
+    if (!apps.length) {
+      body.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-slate-500">Sin postulaciones para mostrar</td></tr>';
+      document.getElementById('table-count').textContent = '';
+      return;
+    }
+    body.innerHTML = apps.map(a => {
+      const statusStyle = STATUS_STYLES[a.status] || STATUS_STYLES.SKIPPED;
+      const statusLabel = STATUS_LABELS[a.status] || a.status;
+      const platStyle = PLATFORM_COLORS[a.platform] || 'bg-slate-500/15 text-slate-400';
+      const sc = a.score !== null && a.score !== undefined ? a.score : '—';
+      return `
+        <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition group">
+          <td class="py-3 pr-4">
+            <a href="${a.url}" target="_blank" rel="noopener"
+               class="text-slate-200 hover:text-brand-400 font-medium transition line-clamp-1 max-w-xs block">
+              ${escHtml(a.title)}
+            </a>
+          </td>
+          <td class="py-3 pr-4 text-slate-400 text-sm">${escHtml(a.company || '—')}</td>
+          <td class="py-3 pr-4">
+            <span class="badge ${platStyle} capitalize">${a.platform}</span>
+          </td>
+          <td class="py-3 pr-4 text-center">
+            <span class="${scoreColor(a.score)}">${sc}</span>
+          </td>
+          <td class="py-3 pr-4">
+            <span class="badge ${statusStyle}">${statusLabel}</span>
+          </td>
+          <td class="py-3 text-slate-400 text-xs whitespace-nowrap">${fmtDate(a.applied_at)}</td>
+        </tr>`;
+    }).join('');
+    document.getElementById('table-count').textContent =
+      `Mostrando ${apps.length} postulación${apps.length !== 1 ? 'es' : ''}`;
+  }
+
+  function filterTable() {
+    const q = document.getElementById('table-search').value.toLowerCase();
+    const st = document.getElementById('status-filter').value;
+    const filtered = _applications.filter(a => {
+      const matchText = !q ||
+        a.title.toLowerCase().includes(q) ||
+        (a.company || '').toLowerCase().includes(q) ||
+        a.platform.toLowerCase().includes(q);
+      const matchStatus = !st || a.status === st;
+      return matchText && matchStatus;
+    });
+    renderTable(filtered);
+  }
+
+  // ── Status pill ───────────────────────────────────────────────────────────
+  function setStatus(ok) {
+    const pill = document.getElementById('status-pill');
+    if (ok) {
+      pill.className = 'flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+      pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Activo</span>';
+    } else {
+      pill.className = 'flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20';
+      pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span><span>Sin conexión</span>';
+    }
+  }
+
+  // ── Security helper ───────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ── Refresh spinner ───────────────────────────────────────────────────────
+  function spinRefresh(on) {
+    const icon = document.getElementById('refresh-icon');
+    icon.style.transition = 'transform .6s';
+    icon.style.transform = on ? 'rotate(360deg)' : '';
+  }
+
+  // ── Main load ─────────────────────────────────────────────────────────────
+  async function refresh() {
+    spinRefresh(true);
+    try {
+      const [health, stats, history, apps, platforms] = await Promise.all([
+        fetchJSON('/api/health'),
+        fetchJSON('/api/stats/today'),
+        fetchJSON('/api/stats/history'),
+        fetchJSON('/api/applications?limit=100'),
+        fetchJSON('/api/platforms'),
+      ]);
+
+      setStatus(health.status === 'ok');
+      renderStats(stats);
+      renderChart(history);
+      _applications = apps;
+      renderTable(apps);
+      renderPlatforms(platforms);
+
+      const now = new Date();
+      document.getElementById('last-updated').textContent =
+        'Actualizado: ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    } catch (err) {
+      setStatus(false);
+      console.error('Dashboard refresh error:', err);
+    } finally {
+      setTimeout(() => spinRefresh(false), 650);
+    }
+  }
+
+  // Initial load + auto-refresh every 60s
+  refresh();
+  setInterval(refresh, 60_000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+{
+  "meta": {
+    "profile_type": "local",
+    "version": "1.0",
+    "last_updated": "YYYY-MM-DD",
+    "pdf_path": "data/cvs/cv_local.pdf"
+  },
+  "personal_info": {
+    "full_name": "YOUR_FULL_NAME",
+    "email": "YOUR_EMAIL@gmail.com",
+    "phone": "YOUR_PHONE_NUMBER",
+    "location": {
+      "address": "YOUR_STREET_AND_NUMBER",
+      "city": "YOUR_CITY",
+      "province": "YOUR_PROVINCE",
+      "country": "YOUR_COUNTRY",
+      "codigo_postal": "YOUR_POSTAL_CODE",
+      "timezone": "America/Argentina/Cordoba",
+      "utc_offset": "-3"
+    },
+    "movilidad_propia": true
+  },
+  "professional_summary": "YOUR_PROFESSIONAL_SUMMARY. Focus on operational experience: customer service, logistics, cashier, warehouse work, etc.",
+  "profile_context": "This profile targets the local non-tech job market. Do NOT mention programming or IT projects in form responses. Prioritize operational experience and soft skills.",
+  "target_role": {
+    "titles": [
+      "Repositor",
+      "Operario de Depósito",
+      "Cajero",
+      "Atención al Cliente",
+      "Vendedor",
+      "Logística",
+      "Administrativo"
+    ],
+    "modality": [
+      "presencial",
+      "hibrido"
+    ],
+    "locations_accepted": [
+      "YOUR_CITY",
+      "alrededores YOUR_CITY"
+    ],
+    "availability": {
+      "full_time": true,
+      "part_time": true,
+      "turno_rotativo": true,
+      "fines_de_semana": true,
+      "feriados": true,
+      "movilidad_propia": true,
+      "notice_period_days": 0,
+      "availability_start": "inmediata"
+    }
+  },
+  "salary": {
+    "currency_ars": {
+      "amount": 1300000,
+      "period": "monthly",
+      "negotiable": true,
+      "note": "Monthly expectation in Argentine pesos"
+    }
+  },
+  "education": [
+    {
+      "institution": "YOUR_INSTITUTION",
+      "degree": "YOUR_DEGREE",
+      "status": "en_curso",
+      "start_year": 2024,
+      "expected_end_year": 2026,
+      "location": "YOUR_CITY, YOUR_PROVINCE"
+    },
+    {
+      "institution": "YOUR_HIGH_SCHOOL",
+      "degree": "YOUR_HIGH_SCHOOL_DEGREE",
+      "status": "completo",
+      "start_year": 2010,
+      "end_year": 2016,
+      "location": "YOUR_CITY, YOUR_PROVINCE"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "YOUR_CERTIFICATION_NAME",
+      "institution": "YOUR_INSTITUTION",
+      "year": 2016,
+      "duration": "YOUR_DURATION"
+    }
+  ],
+  "skills": {
+    "operativas": [
+      { "name": "Atención al cliente", "level": "avanzado" },
+      { "name": "Manejo de caja", "level": "avanzado" },
+      { "name": "Gestión de stock", "level": "avanzado" },
+      { "name": "Control de inventario", "level": "avanzado" }
+    ],
+    "blandas": [
+      { "name": "Trabajo en equipo", "level": "avanzado" },
+      { "name": "Comunicación", "level": "avanzado" }
+    ],
+    "informatica": [
+      { "name": "Microsoft Word", "level": "intermedio" },
+      { "name": "Microsoft Excel", "level": "intermedio" }
+    ]
+  },
+  "work_experience": [
+    {
+      "company": "Company Name",
+      "role": "Your Role",
+      "start_year": 2025,
+      "end_year": 2026,
+      "end_month": 2,
+      "duration_years": 1,
+      "location": "YOUR_CITY, YOUR_PROVINCE",
+      "description": "Brief description of your responsibilities."
+    },
+    {
+      "company": "Another Company",
+      "role": "Your Role",
+      "start_year": 2023,
+      "end_year": 2025,
+      "duration_years": 2,
+      "location": "YOUR_CITY, YOUR_PROVINCE",
+      "description": "Brief description of your responsibilities."
+    }
+  ],
+  "languages": [
+    { "name": "Español", "level": "nativo" }
+  ],
+  "application_filters": {
+    "min_salary_ars": 900000,
+    "keywords_required": [
+      "atención al cliente",
+      "ventas",
+      "caja",
+      "cajero",
+      "depósito",
+      "logística",
+      "stock",
+      "repositor",
+      "administrativo",
+      "operario",
+      "comercio",
+      "presencial"
+    ],
+    "keywords_excluded": [
+      "remoto exclusivo",
+      "solo remoto",
+      "home office exclusivo",
+      "inglés requerido",
+      "título universitario requerido"
+    ],
+    "locations_accepted": [
+      "YOUR_CITY",
+      "alrededores YOUR_CITY"
+    ],
+    "modalities_accepted": [
+      "presencial",
+      "hibrido"
+    ],
+    "seniority_accepted": [
+      "sin experiencia",
+      "experiencia previa",
+      "junior",
+      "semi-senior"
+    ]
+  }
+}

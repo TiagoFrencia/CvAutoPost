@@ -1,0 +1,162 @@
+{
+  "meta": {
+    "profile_type": "remoto",
+    "version": "1.0",
+    "last_updated": "YYYY-MM-DD",
+    "pdf_path": "data/cvs/cv_remoto.pdf"
+  },
+  "personal_info": {
+    "full_name": "YOUR_FULL_NAME",
+    "email": "YOUR_EMAIL@gmail.com",
+    "phone": "YOUR_PHONE_NUMBER",
+    "location": {
+      "city": "YOUR_CITY",
+      "province": "YOUR_PROVINCE",
+      "country": "YOUR_COUNTRY",
+      "timezone": "America/Argentina/Cordoba",
+      "utc_offset": "-3"
+    },
+    "linkedin": "https://www.linkedin.com/in/YOUR_PROFILE",
+    "github": "https://github.com/YOUR_USERNAME",
+    "portfolio": "https://YOUR_PORTFOLIO_URL"
+  },
+  "professional_summary": "YOUR_PROFESSIONAL_SUMMARY. Describe your stack, experience level, and what you're looking for.",
+  "it_experience_note": "Describe your experience level honestly. If no formal employment, describe personal/academic projects.",
+  "target_role": {
+    "titles": [
+      "Full Stack Developer",
+      "Backend Developer",
+      "Frontend Developer",
+      "Junior Developer"
+    ],
+    "modality": [
+      "remoto"
+    ],
+    "contract_type": [
+      "contractor",
+      "b2b",
+      "full_time_employee"
+    ],
+    "availability": {
+      "full_time": true,
+      "part_time": true,
+      "contract": true,
+      "freelance": true,
+      "timezones_accepted": [
+        "any"
+      ],
+      "travel": "ocasional",
+      "notice_period_days": 0,
+      "availability_start": "inmediata"
+    }
+  },
+  "salary": {
+    "currency_usd": {
+      "amount": 1000,
+      "period": "monthly",
+      "negotiable": true,
+      "note": "Minimum expectation for remote roles"
+    },
+    "currency_ars": {
+      "amount": 1300000,
+      "period": "monthly",
+      "negotiable": true,
+      "note": "Argentine peso equivalent"
+    }
+  },
+  "education": [
+    {
+      "institution": "YOUR_INSTITUTION",
+      "degree": "YOUR_DEGREE",
+      "status": "en_curso",
+      "start_year": 2024,
+      "expected_end_year": 2026,
+      "location": "YOUR_CITY, YOUR_PROVINCE",
+      "highlights": [
+        "Highlight 1",
+        "Highlight 2"
+      ]
+    }
+  ],
+  "skills": {
+    "backend": [
+      { "name": "Java", "level": "intermedio" },
+      { "name": "Spring Boot", "level": "intermedio" },
+      { "name": "PostgreSQL", "level": "intermedio" }
+    ],
+    "frontend": [
+      { "name": "React.js", "level": "intermedio" },
+      { "name": "TypeScript", "level": "intermedio" },
+      { "name": "JavaScript (ES6+)", "level": "intermedio" },
+      { "name": "Tailwind CSS", "level": "intermedio" }
+    ],
+    "tools_and_devops": [
+      { "name": "Git / GitHub", "level": "intermedio" },
+      { "name": "Docker", "level": "basico" },
+      { "name": "CI/CD (GitHub Actions)", "level": "basico" }
+    ]
+  },
+  "languages": [
+    { "name": "Spanish", "level": "native" },
+    { "name": "English", "level": "technical", "detail": "Technical documentation reading. Limited spoken." }
+  ],
+  "projects": [
+    {
+      "name": "Project Name",
+      "description": "What the project does and why you built it.",
+      "tech_stack": ["Tech1", "Tech2", "Tech3"],
+      "highlights": [
+        "Key technical achievement or decision",
+        "Another highlight"
+      ],
+      "url": "https://github.com/YOUR_USERNAME/project-repo"
+    }
+  ],
+  "work_experience": [
+    {
+      "company": "Company Name",
+      "role": "Your Role",
+      "start_year": 2025,
+      "end_year": 2026,
+      "duration_years": 1,
+      "is_it": false,
+      "description": "Brief description of responsibilities."
+    }
+  ],
+  "application_filters": {
+    "min_salary_usd": 1000,
+    "keywords_required": [
+      "Java",
+      "Spring Boot",
+      "React",
+      "Full Stack",
+      "Backend",
+      "Frontend",
+      "JavaScript",
+      "PostgreSQL"
+    ],
+    "keywords_excluded": [
+      "W-2",
+      "Green Card",
+      "US Citizen",
+      "10+ years",
+      "8+ years"
+    ],
+    "locations_accepted": [
+      "remoto",
+      "remote",
+      "worldwide",
+      "latam"
+    ],
+    "modalities_accepted": [
+      "remoto"
+    ],
+    "seniority_accepted": [
+      "junior",
+      "semi-senior",
+      "mid-level",
+      "trainee",
+      "entry-level"
+    ]
+  }
+}

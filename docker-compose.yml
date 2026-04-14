@@ -1,0 +1,63 @@
+services:
+  bot:
+    build: .
+    container_name: auto_applier_bot
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./migrations:/app/migrations
+    networks:
+      - botnet
+    shm_size: '1gb'
+    mem_limit: 3g
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    container_name: auto_applier_dashboard
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    networks:
+      - botnet
+
+  db:
+    image: postgres:16-alpine
+    container_name: auto_applier_db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: bot_user
+      POSTGRES_PASSWORD: bot_password
+      POSTGRES_DB: auto_applier
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bot_user -d auto_applier"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - botnet
+
+  # Ollama runs on the Windows host (installed as a service).
+  # The bot accesses it via http://host.docker.internal:11434 — no container needed.
+
+volumes:
+  postgres_data:
+
+networks:
+  botnet:
+    driver: bridge

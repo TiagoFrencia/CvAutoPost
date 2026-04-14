@@ -1,0 +1,162 @@
+# ============================================================
+# data/answers.yaml — Pre-defined answers for job application forms
+# Used by form_filler.py BEFORE calling the LLM.
+# If a field matches a key here, zero tokens are spent.
+#
+# SETUP: Copy this file to data/answers.yaml and fill in your info.
+# ============================================================
+
+# --- ZONA / UBICACIÓN ---
+en_que_zona_resides: "YOUR_CITY, YOUR_PROVINCE, YOUR_COUNTRY"
+zona_de_residencia: "YOUR_CITY, YOUR_PROVINCE, YOUR_COUNTRY"
+zona_resides: "YOUR_CITY, YOUR_PROVINCE, YOUR_COUNTRY"
+donde_resides: "YOUR_CITY, YOUR_PROVINCE, YOUR_COUNTRY"
+zona: "YOUR_CITY, YOUR_PROVINCE"
+lugar_de_residencia: "YOUR_CITY, YOUR_PROVINCE, YOUR_COUNTRY"
+
+# --- REMUNERACIÓN ---
+remuneracion_estimada_pretendida: "YOUR_SALARY_EXPECTATION_ARS"
+remuneracion_pretendida: "YOUR_SALARY_EXPECTATION_ARS"
+remuneracion_estimada: "YOUR_SALARY_EXPECTATION_ARS"
+pretension_remuneracion: "YOUR_SALARY_EXPECTATION_ARS"
+
+# --- SALARIO ---
+salary_expectation_usd: "1000"
+salary_expectation_ars: "1300000"
+salary_expectation_usd_annual: "12000"
+salary_currency_preference: "USD"
+salary_negotiable: "Yes, open to discussion based on the role and responsibilities."
+salary_expectation_usd_number: 1000
+salary_expectation_ars_number: 1300000
+pretension_salarial: "1000 USD monthly"
+pretension_salarial_ars: "YOUR_SALARY_EXPECTATION_ARS"
+
+# --- DISPONIBILIDAD ---
+availability_start: "Immediate"
+notice_period: "No notice period. Immediately available."
+availability_hours_per_week: "40"
+availability_full_time: "Yes"
+availability_part_time: "Yes"
+timezone_flexibility: "Yes, I can work in any timezone based on the team."
+travel_availability: "Yes, available for occasional travel."
+movilidad_propia: "Yes"
+tiene_movilidad_propia: "Yes"
+movilidad: "Yes"
+tiene_movilidad: "Yes"
+vehiculo_propio: "Yes"
+auto_propio: "Yes"
+
+# --- MODALIDAD ---
+work_modality_preference: "Remote"
+willing_to_relocate: "Not at the moment, but open to discussing it."
+remote_setup: "I have a stable internet connection, my own computer and a dedicated workspace."
+
+# --- EXPERIENCIA Y SENIORITY ---
+years_of_experience: "1"
+years_of_experience_number: 1
+years_of_experience_professional: "No formal paid IT experience. Personal and academic projects since 2024."
+seniority_level: "Junior"
+current_role: "Full Stack Developer (personal and academic projects)"
+
+# --- MOTIVACIÓN ---
+why_apply: "YOUR_WHY_APPLY_ANSWER"
+why_this_company: "YOUR_WHY_THIS_COMPANY_ANSWER"
+career_goals: "YOUR_CAREER_GOALS_ANSWER"
+biggest_strength: "YOUR_BIGGEST_STRENGTH_ANSWER"
+biggest_weakness: "YOUR_BIGGEST_WEAKNESS_ANSWER"
+
+# --- IDIOMAS ---
+english_level: "Technical — documentation reading. No fluent conversation."
+english_spoken: "Basic / No"
+english_written: "Technical — documentation and basic written communication."
+spanish_level: "Native"
+nivel_ingles: "Technical — documentation reading"
+nivel_espanol: "Native"
+
+# --- INFORMACIÓN PERSONAL ---
+full_name: "YOUR_FULL_NAME"
+first_name: "YOUR_FIRST_NAME"
+last_name: "YOUR_LAST_NAME"
+email: "YOUR_EMAIL@gmail.com"
+phone: "YOUR_PHONE_NUMBER"
+phone_country_code: "+54"
+phone_full: "+54YOUR_PHONE_NUMBER"
+whatsapp: "+54YOUR_PHONE_NUMBER"
+city: "YOUR_CITY"
+province: "YOUR_PROVINCE"
+country: "YOUR_COUNTRY"
+country_code: "AR"
+codigo_postal: "YOUR_POSTAL_CODE"
+address: "YOUR_CITY, YOUR_PROVINCE, YOUR_COUNTRY"
+linkedin_url: "https://www.linkedin.com/in/YOUR_PROFILE"
+github_url: "https://github.com/YOUR_USERNAME"
+portfolio_url: "https://YOUR_PORTFOLIO_URL"
+linkedin_headline: "YOUR_LINKEDIN_HEADLINE"
+fecha_nacimiento: "DD/MM/YYYY"
+dni: "YOUR_DNI"
+cuil: "YOUR_CUIL"
+estado_civil: "Soltero"
+
+# --- EDUCACIÓN ---
+highest_education: "YOUR_EDUCATION_LEVEL"
+degree: "YOUR_DEGREE_NAME"
+institution: "YOUR_INSTITUTION"
+graduation_year: "YYYY (en curso)"
+currently_studying: "Yes"
+nivel_estudios: "Terciario en curso"
+
+# --- SITUACIÓN LABORAL ACTUAL ---
+currently_employed: "No"
+reason_for_leaving: "YOUR_REASON_FOR_LEAVING"
+
+# --- SITUACIÓN LEGAL / LABORAL ---
+work_authorization: "Argentine citizen. No work authorization for USA/EU without sponsorship."
+requires_sponsorship: "Not applicable — remote role from Argentina."
+has_work_permit_usa: "No"
+has_work_permit_eu: "No"
+freelancer_or_employee: "Open to both modalities."
+tax_id_argentina: "CUIL available if required."
+
+# --- HERRAMIENTAS Y SKILLS ESPECÍFICAS ---
+git_experience: "Yes, I use Git and GitHub daily on all my projects."
+docker_experience: "Basic experience with Docker and Docker Compose."
+ci_cd_experience: "GitHub Actions for basic CI/CD."
+testing_experience: "Basic experience with unit tests. In the process of deepening."
+agile_experience: "Theoretical knowledge of agile methodologies (Scrum/Kanban). No formal team experience."
+
+# --- PREGUNTAS COMUNES DE FORMULARIO ---
+heard_about_us: "Through the job platform where you posted this listing."
+referral: "No"
+has_been_interviewed_before: "No in the IT field."
+willing_to_do_technical_test: "Yes, gladly."
+willing_to_do_video_interview: "Yes."
+has_portfolio: "Yes — https://YOUR_PORTFOLIO_URL"
+has_github: "Yes — https://github.com/YOUR_USERNAME"
+open_source_contributions: "Not at the moment, working on personal projects."
+health_insurance: "I don't have one currently. Open to discussing benefits."
+expects_benefits: "Open to discussing based on the compensation package."
+
+# --- PREGUNTAS LEGALES / COMPLIANCE ---
+has_criminal_record: "No"
+background_check_consent: "Yes"
+drug_test_consent: "Yes"
+age_confirmation_18: "Yes"
+
+# --- PRESENTACIÓN ---
+summary_short: "YOUR_SHORT_SUMMARY"
+summary_short_english: "YOUR_SHORT_SUMMARY_IN_ENGLISH"
+cover_letter: |
+  YOUR COVER LETTER IN ENGLISH.
+  Describe your experience, projects, and why you're applying.
+  Keep it concise and professional.
+
+carta_de_presentacion: |
+  TU CARTA DE PRESENTACIÓN EN ESPAÑOL.
+  Describí tu experiencia, proyectos y por qué aplicás.
+  Sé conciso y profesional.
+
+# ============================================================
+# NOTE FOR form_filler.py:
+# If the form field does NOT match any key in this file → send to LLM.
+# If it matches → use this value directly. Zero cost.
+# ============================================================

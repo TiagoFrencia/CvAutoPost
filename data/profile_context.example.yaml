@@ -1,0 +1,187 @@
+# ============================================================
+# data/profile_context.yaml — Narrative context for the LLM
+#
+# Purpose: provide form_filler.py's LLM with detailed narrative
+# information to answer open-ended application form questions
+# (motivation, experience, projects, behavioral questions, etc.)
+#
+# Does NOT replace answers.yaml (which handles short fields at
+# zero LLM cost). This file is injected into the LLM prompt when
+# a field has no match in answers.yaml.
+#
+# SETUP: Copy this file to data/profile_context.yaml and fill in
+# your own information in both profiles.
+# ============================================================
+
+
+# ─── REMOTE PROFILE (tech / international roles) ─────────────────────────────
+
+remoto:
+
+  motivacion:
+    por_que_programacion: >
+      Describe why you got into programming and what drives you.
+      When did you start? What excites you most about software development?
+
+    por_que_junior: >
+      Explain your junior mindset — what you're looking for in a first role,
+      why attitude and learning matter more than years of experience.
+
+    por_que_remoto: >
+      Explain your setup and approach for remote work.
+      Mention your equipment, internet connection, and work style.
+
+    objetivo_profesional: >
+      Describe your short and medium-term professional goals.
+      Where do you want to be in 1 year? In 3 years?
+
+  proyectos:
+    project_1: >
+      Describe your first project: what it does, the tech stack,
+      the main technical challenges, and what you learned.
+
+    project_2: >
+      Describe your second project similarly.
+
+    project_3: >
+      Describe your third project similarly.
+
+  preguntas_conductuales:
+    desafio_tecnico: >
+      Describe the biggest technical challenge you've faced.
+      What was the problem? How did you approach it? What was the outcome?
+
+    trabajo_bajo_presion: >
+      Describe a situation where you worked under pressure.
+      How did you handle it? What did you learn?
+
+    aprendizaje_rapido: >
+      Give an example of a time you had to learn something new quickly.
+      What was it? How did you do it?
+
+    trabajo_en_equipo: >
+      Describe your experience working in a team.
+      How do you collaborate? How do you handle disagreements?
+
+    gestion_tiempo: >
+      How do you manage your time and priorities?
+      Describe your workflow and tools.
+
+  preguntas_frecuentes:
+    experiencia_it_formal: >
+      Be honest about your experience level.
+      Describe what you've built even without formal employment.
+
+    brecha_laboral: >
+      Explain any employment gap honestly and positively.
+
+    trabaja_actualmente: >
+      Describe your current employment status and availability.
+
+    expectativa_salarial_remoto: >
+      State your salary expectation for remote roles.
+      Mention that it's negotiable.
+
+    disponibilidad_horaria: >
+      Describe your availability — timezone flexibility, hours per week.
+
+    inglés: >
+      Be honest about your English level — reading, writing, speaking.
+
+
+# ─── LOCAL PROFILE (non-tech / in-person roles) ──────────────────────────────
+# IMPORTANT: Do NOT mention programming, IT, or software projects in this
+# profile. Focus on operational experience and soft skills.
+
+local:
+
+  motivacion:
+    por_que_este_rubro: >
+      Describe your motivation for the local/non-tech job market.
+      Focus on customer service, logistics, or operations experience.
+
+    objetivo_profesional: >
+      Describe your goals in the local job market.
+      Stability, growth, contribution to the team.
+
+    por_que_esta_empresa: >
+      Generic answer for why you're interested in the company.
+      Keep it positive and professional.
+
+  experiencia:
+    trabajo_1: >
+      Describe your first non-tech work experience.
+      Company, role, responsibilities, duration.
+
+    trabajo_2: >
+      Describe your second non-tech work experience.
+
+    trabajo_3: >
+      Describe your third non-tech work experience.
+
+  preguntas_conductuales:
+    cliente_dificil: >
+      Describe how you handle difficult customers.
+      Give a specific example.
+
+    trabajo_bajo_presion: >
+      Describe a high-pressure situation at work.
+      How did you handle it?
+
+    trabajo_en_equipo: >
+      Describe your teamwork experience in non-tech roles.
+
+    puntualidad_responsabilidad: >
+      Affirm your punctuality and reliability.
+      Mention any recognition or track record.
+
+  preguntas_frecuentes:
+    por_que_te_fuiste_del_trabajo_anterior: >
+      Explain why you left your last job.
+      Keep it positive and professional.
+
+    disponibilidad_horaria: >
+      State your full availability — shifts, weekends, holidays.
+
+    movilidad: >
+      Confirm whether you have your own transportation.
+
+    expectativa_salarial_local: >
+      State your salary expectation for local roles in ARS.
+
+    trabaja_actualmente: >
+      State your current employment status.
+
+    referencias: >
+      Confirm that references are available upon request.
+
+    experiencia_previa_rubro: >
+      Confirm and summarize your relevant experience for the role.
+
+
+# ─── GENERAL CONTEXT (applies to both profiles) ──────────────────────────────
+
+general:
+
+  datos_personales:
+    nombre_completo: "YOUR_FULL_NAME"
+    fecha_nacimiento: "DD/MM/YYYY"
+    edad: 0  # YOUR_AGE
+    dni: "YOUR_DNI"
+    cuil: "YOUR_CUIL"
+    estado_civil: "YOUR_CIVIL_STATUS"
+    domicilio: "YOUR_STREET_AND_NUMBER, YOUR_CITY, YOUR_PROVINCE"
+    codigo_postal: "YOUR_POSTAL_CODE"
+    telefono: "+54YOUR_PHONE"
+    email: "YOUR_EMAIL@gmail.com"
+
+  antecedentes:
+    judiciales: "No criminal or judicial record."
+    psicofisico: "In good physical and mental condition for work."
+    consentimiento_verificacion: "Yes, I authorize background verification."
+
+  estudios:
+    nivel_maximo: "YOUR_HIGHEST_EDUCATION_LEVEL"
+    titulo_secundario: "YOUR_HIGH_SCHOOL_DEGREE — YOUR_SCHOOL, YOUR_CITY (YEAR)"
+    titulo_terciario: "YOUR_TERTIARY_DEGREE — in progress (YEAR–YEAR)"
+    certificaciones: "YOUR_CERTIFICATIONS"

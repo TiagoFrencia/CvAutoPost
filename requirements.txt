@@ -1,0 +1,39 @@
+# Web automation
+playwright==1.44.0
+playwright-stealth==1.0.6
+nodriver==0.38.0
+websockets==13.1
+
+# Database
+sqlalchemy==2.0.30
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# AI
+google-generativeai==0.7.2
+
+# HTTP
+requests==2.31.0
+httpx==0.27.0
+beautifulsoup4==4.12.3
+lxml==5.2.1
+
+# Config & validation
+pydantic==2.7.1
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
+
+# Scheduling & notifications
+apscheduler==3.10.4
+python-telegram-bot==21.3
+
+# Utilities
+structlog==24.1.0
+pyyaml==6.0.1
+fake-useragent==1.5.1
+cryptography==42.0.5
+
+# Testing
+pytest==8.2.0
+pytest-mock==3.14.0
+responses==0.25.3

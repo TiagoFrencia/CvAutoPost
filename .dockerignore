@@ -1,0 +1,40 @@
+# Secrets — never bake into image
+.env
+apiKeyGemini.txt
+data/cookies/
+data/credentials/
+data/screenshots/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Git
+.git/
+.gitignore
+
+# Debug/exploration scripts (not needed in container)
+tests/explore_*.py
+tests/inspect_*.py
+tests/check_*.py
+tests/screenshot_*.py
+tests/run_*.py
+tests/dry_run_*.py
+tests/test_nodriver_*.py
+tests/test_zj_*.py
+tests/*.html
+tests/*.json
+tests/*.txt
+
+# IDE
+.vscode/
+.idea/
+
+# Claude/plans (not needed in container)
+CLAUDE.md
