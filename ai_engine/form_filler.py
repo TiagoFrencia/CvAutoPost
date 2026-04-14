@@ -44,6 +44,27 @@ REGLAS:
 Respondé SIEMPRE con JSON válido:
 {"answer": "<respuesta>"}"""
 
+COVER_LETTER_SYSTEM_PROMPT = """Eres un redactor experto en cartas de presentación para postulaciones laborales.
+Escribís en nombre del candidato. Sé directo, auténtico y específico para la oferta.
+
+REGLAS:
+1. La carta debe ser de 3 párrafos cortos (máximo 180 palabras en total).
+2. Párrafo 1: quién sos y por qué esta oferta específica te interesa (mencioná la empresa y el rol).
+3. Párrafo 2: el proyecto o experiencia más relevante del CV que demuestra que podés hacer el trabajo.
+4. Párrafo 3: disponibilidad y llamada a la acción.
+5. NO uses frases genéricas ("soy una persona proactiva", "trabajo en equipo"). Sé concreto.
+6. Escribí en el idioma de la oferta (si tiene inglés en el título/descripción → inglés; si no → español).
+7. Respondé SIEMPRE con JSON válido: {"answer": "<carta completa>"}"""
+
+# Cover letter field label patterns — triggers personalized generation when job context is set
+_COVER_LETTER_LABELS = {
+    "cover_letter", "carta_de_presentacion", "carta de presentacion",
+    "carta_presentacion", "presentacion", "motivacion", "por qué aplicás",
+    "por que aplicas", "why are you applying", "cover letter",
+    "motivación", "why do you want to work", "why this role",
+    "why this company", "por que queres trabajar",
+}
+
 
 class OrphanQuestion(Exception):
     """Kept for backward compatibility. No longer raised by FormFiller."""
@@ -58,6 +79,19 @@ class FormFiller:
         self.cv_data = get_cv(cv_profile_name)
         self._answers_cache: Optional[dict] = None
         self._profile_context: Optional[str] = None
+        # Job context — set via set_job_context() to enable personalized cover letters
+        self._job_title: Optional[str] = None
+        self._job_company: Optional[str] = None
+        self._job_description: Optional[str] = None
+
+    def set_job_context(self, title: str, company: Optional[str], description: Optional[str]) -> None:
+        """
+        Provide the current job's details so personalized cover letters can be generated.
+        Call this once per application before the first fill() call.
+        """
+        self._job_title = title
+        self._job_company = company or ""
+        self._job_description = (description or "")[:2000]
 
     @property
     def answers(self) -> dict:
@@ -73,6 +107,11 @@ class FormFiller:
         - required: kept for API compatibility, no longer affects behavior
         Returns None only when the LLM call fails entirely.
         """
+        # Step 0: personalized cover letter — bypass YAML when job context is available
+        if self._job_title and _is_cover_letter_field(field_label):
+            logger.debug("form_filler.personalized_cover_letter", field=field_label)
+            return self._generate_personalized_cover_letter()
+
         # Step 1: exact YAML key match
         answer = _yaml_exact_match(self.answers, field_label)
         if answer is not None:
@@ -99,6 +138,28 @@ class FormFiller:
             self._profile_context = _load_profile_context(self.cv_profile_name)
         return self._profile_context
 
+    def _generate_personalized_cover_letter(self) -> Optional[str]:
+        """Generate a cover letter tailored to the specific job stored in job context."""
+        cv_summary = json.dumps(self.cv_data, ensure_ascii=False)[:2000]
+        user_prompt = (
+            f"CV del candidato (JSON):\n{cv_summary}\n\n"
+            f"Contexto adicional:\n{self.profile_context}\n\n"
+            f"Oferta de trabajo:\n"
+            f"  Título: {self._job_title}\n"
+            f"  Empresa: {self._job_company}\n"
+            f"  Descripción: {self._job_description}\n\n"
+            f"Escribí una carta de presentación personalizada para esta oferta."
+        )
+        logger.info(
+            "form_filler.generating_cover_letter",
+            job=self._job_title,
+            company=self._job_company,
+        )
+        answer = self._ask_ollama_with_prompt(COVER_LETTER_SYSTEM_PROMPT, user_prompt, "cover_letter")
+        if answer is None:
+            answer = self._ask_gemini_with_prompt(COVER_LETTER_SYSTEM_PROMPT, user_prompt, "cover_letter")
+        return answer
+
     def _ask_llm(self, field_label: str, field_type: str) -> Optional[str]:
         cv_summary = json.dumps(self.cv_data, ensure_ascii=False)[:2000]
         user_prompt = (
@@ -118,10 +179,16 @@ class FormFiller:
         return self._ask_gemini(user_prompt, field_label)
 
     def _ask_ollama(self, user_prompt: str, field_label: str) -> Optional[str]:
+        return self._ask_ollama_with_prompt(FORM_SYSTEM_PROMPT, user_prompt, field_label)
+
+    def _ask_gemini(self, user_prompt: str, field_label: str) -> Optional[str]:
+        return self._ask_gemini_with_prompt(FORM_SYSTEM_PROMPT, user_prompt, field_label)
+
+    def _ask_ollama_with_prompt(self, system_prompt: str, user_prompt: str, field_label: str) -> Optional[str]:
         payload = {
             "model": settings.ollama_model,
             "messages": [
-                {"role": "system", "content": FORM_SYSTEM_PROMPT},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
             "stream": False,
@@ -141,13 +208,13 @@ class FormFiller:
             logger.warning("form_filler.ollama_error", field=field_label, error=str(e))
             return None
 
-    def _ask_gemini(self, user_prompt: str, field_label: str) -> Optional[str]:
+    def _ask_gemini_with_prompt(self, system_prompt: str, user_prompt: str, field_label: str) -> Optional[str]:
         try:
             import google.generativeai as genai
             genai.configure(api_key=settings.gemini_api_key)
             model = genai.GenerativeModel(
                 model_name="gemini-2.5-flash",
-                system_instruction=FORM_SYSTEM_PROMPT,
+                system_instruction=system_prompt,
             )
             response = model.generate_content(user_prompt)
             return _parse_fill_response(response.text, field_label)
@@ -183,6 +250,13 @@ class FormFiller:
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
+def _is_cover_letter_field(label: str) -> bool:
+    """Return True if the field label indicates a cover letter / motivation question."""
+    label_norm = _normalise_key(label)
+    return any(_normalise_key(pattern) in label_norm or label_norm in _normalise_key(pattern)
+               for pattern in _COVER_LETTER_LABELS)
+
 
 def _load_profile_context(cv_profile_name: str) -> str:
     """

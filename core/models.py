@@ -98,6 +98,7 @@ class Application(Base):
     screenshot_path = Column(String(255))
     retry_count = Column(Integer, default=0)
     applied_at = Column(DateTime)
+    email_category = Column(String(20))   # set when an email reply is linked: INTERVIEW/OFFER/REJECTION/RECEIVED
 
     job = relationship("Job", back_populates="applications")
     cv_profile = relationship("CVProfile", back_populates="applications")

@@ -26,7 +26,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.database import SessionLocal
-from core.models import Application, DailyReport, Job, Platform
+from core.models import Application, DailyReport, Job, MatchResult, Platform
 
 app = FastAPI(title="Auto Applier Dashboard", docs_url=None, redoc_url=None)
 
@@ -73,6 +73,11 @@ class PlatformStatus(BaseModel):
     is_paused: bool
     paused_until: Optional[str]
     pause_reason: Optional[str]
+
+
+class SkillGap(BaseModel):
+    skill: str
+    count: int
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -191,6 +196,37 @@ def applications(limit: int = 100):
                 url=job.url,
             ))
         return result
+    finally:
+        db.close()
+
+
+@app.get("/api/skills-gap", response_model=list[SkillGap])
+def skills_gap(limit: int = 20):
+    """
+    Aggregate missing_skills from MatchResult records (last 30 days).
+    Returns the top N skills that jobs required but the CV didn't fully cover.
+    """
+    db = SessionLocal()
+    try:
+        cutoff = date.today() - timedelta(days=30)
+        rows = (
+            db.query(MatchResult.missing_skills)
+            .filter(MatchResult.evaluated_at >= cutoff)
+            .filter(MatchResult.missing_skills.isnot(None))
+            .all()
+        )
+
+        counts: dict[str, int] = {}
+        for (skills,) in rows:
+            if not isinstance(skills, list):
+                continue
+            for skill in skills:
+                if skill and isinstance(skill, str):
+                    key = skill.strip()
+                    counts[key] = counts.get(key, 0) + 1
+
+        top = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:limit]
+        return [SkillGap(skill=skill, count=cnt) for skill, cnt in top]
     finally:
         db.close()
 

@@ -128,6 +128,8 @@
             <option value="FAILED">Fallida</option>
             <option value="QUEUED">En cola</option>
             <option value="REVIEW_FORM">Revisar form</option>
+            <option value="INTERVIEW">Entrevista</option>
+            <option value="REJECTED">Rechazada</option>
           </select>
         </div>
       </div>
@@ -151,6 +153,20 @@
       </div>
       <p id="table-count" class="mt-3 text-xs text-slate-500"></p>
     </div>
+
+    <!-- ── Skills gap ────────────────────────────────────────────────────────── -->
+    <div class="card fade-in">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-200">Skills gap — últimos 30 días</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Habilidades que las ofertas piden y el CV no cubre del todo</p>
+        </div>
+      </div>
+      <div id="skills-gap-content">
+        <div class="text-slate-500 text-xs">Cargando…</div>
+      </div>
+    </div>
+
   </main>
 
   <script>
@@ -286,10 +302,13 @@
     REVIEW_FORM: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
     REVIEW_SCORE:'bg-violet-500/15 text-violet-400 border border-violet-500/30',
     SKIPPED:     'bg-slate-500/15 text-slate-400 border border-slate-500/30',
+    INTERVIEW:   'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30',
+    REJECTED:    'bg-rose-500/15 text-rose-400 border border-rose-500/30',
   };
   const STATUS_LABELS = {
     APPLIED: 'Aplicada', QUEUED: 'En cola', FAILED: 'Fallida',
     REVIEW_FORM: 'Revisar form', REVIEW_SCORE: 'Revisar score', SKIPPED: 'Omitida',
+    INTERVIEW: 'Entrevista', REJECTED: 'Rechazada',
   };
   const PLATFORM_COLORS = {
     linkedin: 'bg-blue-500/15 text-blue-400',
@@ -366,6 +385,31 @@
     renderTable(filtered);
   }
 
+  // ── Render skills gap ────────────────────────────────────────────────────
+  function renderSkillsGap(skills) {
+    const container = document.getElementById('skills-gap-content');
+    if (!skills.length) {
+      container.innerHTML = '<p class="text-slate-500 text-xs">No hay datos de skills gap aún. Se generan al puntuar ofertas.</p>';
+      return;
+    }
+    const maxCount = skills[0].count;
+    container.innerHTML = `
+      <div class="grid sm:grid-cols-2 gap-x-8 gap-y-2">
+        ${skills.map((s, i) => {
+          const pct = Math.round(s.count / maxCount * 100);
+          const hue = i < 5 ? 'bg-rose-500' : i < 10 ? 'bg-amber-500' : 'bg-sky-500';
+          return `
+            <div class="flex items-center gap-3 py-1.5">
+              <span class="text-xs text-slate-300 w-36 truncate shrink-0" title="${escHtml(s.skill)}">${escHtml(s.skill)}</span>
+              <div class="flex-1 bg-slate-700 rounded-full h-1.5 min-w-0">
+                <div class="${hue} h-1.5 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+              </div>
+              <span class="text-xs text-slate-400 w-6 text-right shrink-0">${s.count}</span>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
   // ── Status pill ───────────────────────────────────────────────────────────
   function setStatus(ok) {
     const pill = document.getElementById('status-pill');
@@ -396,12 +440,13 @@
   async function refresh() {
     spinRefresh(true);
     try {
-      const [health, stats, history, apps, platforms] = await Promise.all([
+      const [health, stats, history, apps, platforms, skillsGap] = await Promise.all([
         fetchJSON('/api/health'),
         fetchJSON('/api/stats/today'),
         fetchJSON('/api/stats/history'),
         fetchJSON('/api/applications?limit=100'),
         fetchJSON('/api/platforms'),
+        fetchJSON('/api/skills-gap?limit=20'),
       ]);
 
       setStatus(health.status === 'ok');
@@ -410,6 +455,7 @@
       _applications = apps;
       renderTable(apps);
       renderPlatforms(platforms);
+      renderSkillsGap(skillsGap);
 
       const now = new Date();
       document.getElementById('last-updated').textContent =

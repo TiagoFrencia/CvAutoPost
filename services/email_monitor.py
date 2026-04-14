@@ -279,7 +279,19 @@ def run_email_check() -> int:
                 )
 
                 category, emoji = classify(subject)
-                _notify_email(emoji, category, subject, from_header, platform_name, date_str)
+
+                # Try to link this email to an existing application in the DB
+                linked_job = _link_to_application(sender_domain, from_header, subject, category)
+
+                _notify_email(
+                    emoji, category, subject, from_header,
+                    platform_name, date_str, linked_job,
+                )
+
+                # For interview invitations, generate and send preparation tips
+                if category == "INTERVIEW" and linked_job:
+                    _send_interview_prep(linked_job)
+
                 seen.add(uid)
                 new_count += 1
 
@@ -298,6 +310,131 @@ def run_email_check() -> int:
             pass
 
 
+def _link_to_application(
+    sender_domain: Optional[str],
+    from_header: str,
+    subject: str,
+    category: str,
+) -> Optional[object]:
+    """
+    Try to find the Application in the DB that corresponds to this email reply.
+    Searches applied applications by company name (matched against sender domain / subject).
+    Updates the application status and email_category if found.
+    Returns the Job ORM object if a match is found, None otherwise.
+    """
+    try:
+        from core.database import SessionLocal
+        from core.models import Application, Job
+        from core.enums import ApplicationStatus
+
+        EMAIL_CATEGORY_TO_STATUS = {
+            "INTERVIEW": ApplicationStatus.INTERVIEW.value,
+            "REJECTION": ApplicationStatus.REJECTED.value,
+        }
+
+        db = SessionLocal()
+        try:
+            # Build search terms: sender domain without TLD + subject words
+            search_terms = set()
+            if sender_domain:
+                # e.g. "acmecorp.com.ar" → "acmecorp"
+                parts = sender_domain.replace(".com.ar", "").replace(".com", "").split(".")
+                search_terms.update(p for p in parts if len(p) > 3)
+            # Add significant words from subject
+            for word in re.split(r"[\s\-–—]+", subject):
+                if len(word) > 4 and not word.lower() in {
+                    "para", "sobre", "desde", "your", "with", "that", "from",
+                    "the", "and", "for", "our", "has", "been",
+                }:
+                    search_terms.add(word.lower())
+
+            if not search_terms:
+                return None
+
+            # Find APPLIED applications where company name contains one of the search terms
+            applied_apps = (
+                db.query(Application, Job)
+                .join(Job, Application.job_id == Job.id)
+                .filter(Application.status == ApplicationStatus.APPLIED.value)
+                .filter(Application.email_category.is_(None))  # not already linked
+                .all()
+            )
+
+            best_match = None
+            for app, job in applied_apps:
+                company_norm = (job.company or "").lower()
+                if any(term in company_norm for term in search_terms):
+                    best_match = (app, job)
+                    break
+
+            if not best_match:
+                return None
+
+            app, job = best_match
+            app.email_category = category
+            new_status = EMAIL_CATEGORY_TO_STATUS.get(category)
+            if new_status:
+                app.status = new_status
+
+            db.commit()
+            logger.info(
+                "email_monitor.application_linked",
+                app_id=app.id,
+                job_id=job.id,
+                company=job.company,
+                category=category,
+            )
+            return job
+
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.warning("email_monitor.link_error", error=str(e))
+        return None
+
+
+def _send_interview_prep(job: object) -> None:
+    """
+    Generate and send a Telegram interview preparation brief for the given job.
+    Uses Gemini to extract key technologies and likely questions from the description.
+    """
+    try:
+        import google.generativeai as genai
+        from core.config import settings as _settings
+
+        description = getattr(job, "description", "") or ""
+        title = getattr(job, "title", "")
+        company = getattr(job, "company", "") or ""
+
+        prompt = (
+            f"Oferta de trabajo:\nTítulo: {title}\nEmpresa: {company}\n"
+            f"Descripción:\n{description[:2000]}\n\n"
+            f"El candidato tiene una entrevista para esta posición. "
+            f"Generá un brief de preparación conciso con:\n"
+            f"1. Las 3-5 tecnologías/skills más importantes que debería repasar\n"
+            f"2. Las 3 preguntas técnicas más probables para este rol\n"
+            f"3. Una sugerencia de presentación de 2 líneas (quién soy, por qué este rol)\n"
+            f"Respuesta en español, formato claro con bullets. Máximo 200 palabras."
+        )
+
+        genai.configure(api_key=_settings.gemini_api_key)
+        model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+        response = model.generate_content(prompt)
+        prep_text = response.text.strip()
+
+        msg = (
+            f"📋 <b>Prep para entrevista — {_escape_html(title)}</b>\n"
+            f"🏢 {_escape_html(company)}\n\n"
+            f"{_escape_html(prep_text)}"
+        )
+        notifier.send_message(msg)
+        logger.info("email_monitor.interview_prep_sent", job_id=getattr(job, "id", "?"))
+
+    except Exception as e:
+        logger.warning("email_monitor.interview_prep_error", error=str(e))
+
+
 def _notify_email(
     emoji: str,
     category: str,
@@ -305,6 +442,7 @@ def _notify_email(
     from_header: str,
     platform: Optional[str],
     date_str: str,
+    linked_job: Optional[object] = None,
 ) -> None:
     CATEGORY_LABELS = {
         "INTERVIEW": "¡Entrevista!",
@@ -315,10 +453,17 @@ def _notify_email(
     }
     label = CATEGORY_LABELS.get(category, "Email de trabajo")
     platform_line = f"\n🏢 Plataforma: <b>{platform}</b>" if platform else ""
+    linked_line = ""
+    if linked_job:
+        linked_line = (
+            f"\n🔗 Oferta vinculada: <b>{_escape_html(getattr(linked_job, 'title', ''))}</b>"
+            f" @ {_escape_html(getattr(linked_job, 'company', '') or '')}"
+        )
 
     text = (
         f"{emoji} <b>{label}</b>"
-        f"{platform_line}\n"
+        f"{platform_line}"
+        f"{linked_line}\n"
         f"📧 De: {_escape_html(from_header)}\n"
         f"📌 Asunto: <b>{_escape_html(subject)}</b>\n"
         f"📅 {date_str}"
@@ -329,6 +474,7 @@ def _notify_email(
         category=category,
         platform=platform,
         subject=subject[:80],
+        linked_job_id=getattr(linked_job, "id", None),
     )
 
 

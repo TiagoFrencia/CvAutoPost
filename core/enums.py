@@ -28,9 +28,11 @@ class ApplicationStatus(str, Enum):
     QUEUED = "QUEUED"
     APPLIED = "APPLIED"
     FAILED = "FAILED"
-    SKIPPED = "SKIPPED"     # external apply or otherwise not applicable
+    SKIPPED = "SKIPPED"       # external apply or otherwise not applicable
     CONFIRMED = "CONFIRMED"
     REVIEW_FORM = "REVIEW_FORM"
+    INTERVIEW = "INTERVIEW"   # company replied with interview invitation
+    REJECTED = "REJECTED"     # company sent rejection
 
 
 class CVProfileName(str, Enum):

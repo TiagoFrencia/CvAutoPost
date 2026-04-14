@@ -5,6 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
+![CI](https://github.com/TiagoFrencia/CvAutoPost/actions/workflows/ci.yml/badge.svg)
 ![Tests](https://img.shields.io/badge/Tests-115%20passing-22c55e?logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-64748b)
 
